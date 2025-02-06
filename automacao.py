@@ -90,37 +90,36 @@ def posicionar_janelas():
     if len(janelas) < 2:
         raise Exception("Menos de duas janelas do Excel abertas para ajustar.")
 
-    # Ordenar janelas para garantir consistência
     janelas = sorted(janelas, key=lambda x: x.title)
 
     largura_tela, altura_tela = pyautogui.size()
     largura_meia_tela = largura_tela // 2
 
-    # Configurar primeira janela (lado esquerdo)
+    # Configurar janela do lado esquerdo
     janelas[0].moveTo(0, 0)  # Posição inicial no canto superior esquerdo
-    janelas[0].resizeTo(largura_meia_tela, altura_tela)  # Metade da largura, altura total
+    janelas[0].resizeTo(largura_meia_tela, altura_tela)
 
-    # Configurar segunda janela (lado direito)
+    # Configurar janela do lado direito
     janelas[1].moveTo(largura_meia_tela, 0)  # Metade da largura no eixo X
-    janelas[1].resizeTo(largura_meia_tela, altura_tela)  # Metade da largura, altura total
+    janelas[1].resizeTo(largura_meia_tela, altura_tela)
     
     print("Janelas posicionadas com sucesso.")
     
 try:
     navegador.get("https://sinan.saude.gov.br/sinan/login/login.jsf")
-    time.sleep(2)
+    time.sleep(1.3)
     print("Entrei no site") 
     navegador.find_element(By.XPATH, '//*[@id="form"]/fieldset/div[4]/input').click()
     time.sleep(1)
     print("btn 1") 
     navegador.find_element(By.XPATH, '//*[@id="barraMenu:j_id28"]/tbody/tr/td[12]').click()
-    time.sleep(0.5)
+    time.sleep(1)
     print("btn 2")
     navegador.find_element(By.XPATH, '//*[@id="barraMenu:j_id52_span"]').click()
-    time.sleep(1)
+    time.sleep(1.2)
     print("btn 3") 
     navegador.find_element(By.XPATH, '//*[@id="barraMenu:j_id53:anchor"]').click()
-    time.sleep(1.25)
+    time.sleep(1.1)
     print("btn 4") 
     navegador.find_element(By.XPATH, '//*[@id="form:consulta_dataInicialPopupButton"]').click()
     time.sleep(1)
@@ -129,16 +128,16 @@ try:
     time.sleep(0.7)
     print("btn 6")
     navegador.find_element(By.XPATH, '//*[@id="form:consulta_dataInicialDateEditorLayoutM0"]').click()
-    time.sleep(0.4)
+    time.sleep(0.6)
     print("btn 7")
     navegador.find_element(By.XPATH, '//*[@id="form:consulta_dataInicialDateEditorButtonOk"]').click()
     time.sleep(0.8)
     print("btn 8") 
-    navegador.find_element(By.XPATH, '//*[@id="form:consulta_dataInicialDayCell1"]').click()
-    time.sleep(0.5)
+    navegador.find_element(By.XPATH, '//*[@id="form:consulta_dataInicialDayCell3"]').click()
+    time.sleep(0.8)
     print("btn 9") 
     navegador.find_element(By.XPATH, '//*[@id="form:consulta_dataFinalPopupButton"]').click()
-    time.sleep(1.1)
+    time.sleep(1)
     print("btn 10") 
     navegador.find_element(By.XPATH, '//*[@id="form:consulta_dataFinalFooter"]/table/tbody/tr/td[5]/div').click()
     time.sleep(1)
@@ -150,36 +149,44 @@ try:
     time.sleep(1)
     print("btn 13") 
     navegador.find_element(By.XPATH, '//*[@id="form:j_id128"]').click()
-    time.sleep(4)
+    time.sleep(5)
     print("btn 14")
     print("Entrando no modo crítico") 
     navegador.find_element(By.XPATH, '//*[@id="barraMenu:j_id52_span"]').click()
-    time.sleep(5)
+    time.sleep(2.5)
     print("Ok 1") 
     navegador.find_element(By.XPATH, '//*[@id="barraMenu:j_id56:anchor"]').click()
-    time.sleep(5)
+    time.sleep(4)
     print("Ok 2") 
     navegador.find_element(By.XPATH, '//*[@id="form:j_id101"]').click()
-    time.sleep(8)
+    time.sleep(5)
     print("Ok 3")
     navegador.find_element(By.XPATH, '//*[@id="form:j_id101"]').click()
-    time.sleep(8)
-    print("Ok 4")
-    navegador.find_element(By.XPATH, '//*[@id="form:j_id101"]').click()
     time.sleep(6)
-    print("OK 5") 
-    navegador.find_element(By.XPATH, '//*[@id="form:j_id68:0:j_id92"]/center/a').click()
-    time.sleep(3)
+    print("Ok 4")
+    links  = navegador.find_elements(By.XPATH, '//a[contains(text(), "Baixar arquivo DBF")]')
+    if links:
+        links[-1].click()
+    else:
+        print("Nenhum link encontrado!")
+    time.sleep(1)
     print("Ok 6")
+
+    fechar_janelas_indesejadas()
+    time.sleep(1)
 
     os.startfile(caminho_arq_dbf)
     time.sleep(1)
-    arquivo_zip_mais_recente = encontrar_arquivo_zip_mais_recente(caminho_arq_dbf)
-    descompactar_zip(arquivo_zip_mais_recente, caminho_arq_dbf)
-    fechar_janelas_indesejadas()
-    print("Arquivo DBF descompactado")
 
-    time.sleep(2)
+    arquivo_zip_mais_recente = encontrar_arquivo_zip_mais_recente(caminho_arq_dbf)
+    time.sleep(0.5)
+
+    descompactar_zip(arquivo_zip_mais_recente, caminho_arq_dbf)
+    time.sleep(0.5)
+    print("Arquivo DBF descompactado")
+    fechar_janelas_indesejadas()
+
+    time.sleep(0.5)
 
     planilha_daily_reports = r"C:\Users\USER\OneDrive\Área de Trabalho\Daily Reports.xlsx"
     
@@ -187,19 +194,19 @@ try:
         raise FileNotFoundError(f"Arquivo {planilha_daily_reports} não encontrada.")
     
     planilha_arquivo_dbf = encontrar_arq_dbf(caminho_arq_dbf, extensao=".dbf")
-    time.sleep(1)
+    time.sleep(0.6)
     excel_dbf, wb_dbf = abrir_excel(planilha_arquivo_dbf)
     os.startfile(planilha_daily_reports)
-    time.sleep(1)
+    time.sleep(0.6)
 
     os.startfile(planilha_arquivo_dbf)
     time.sleep(0.5)
 
     fechar_janelas_indesejadas()
-    time.sleep(0.5)
+    time.sleep(0.3)
 
     posicionar_janelas()
-    time.sleep(1)
+    time.sleep(0.5)
 
     minimizar_janela()
 except Exception as e:
