@@ -7,210 +7,104 @@ import zipfile
 import pyautogui
 import win32com.client
 import pygetwindow as gw
-import pandas as pd
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.select import Select
 from selenium.webdriver.chrome.options import Options
-
 
 caminho_perfil = r"C:\Users\USER\AppData\Local\Google\Chrome\User Data"
 caminho_subperfil = "Default"
 caminho_arq_dbf = r"C:\Users\USER\Downloads\ArquivoDBF"
 
-options = Options()
-options.add_argument(f"user-data-dir={caminho_perfil}")
-options.add_argument(f"profile-directory={caminho_subperfil}")
+def configurar_navegador():
+    # Configurando o navegador Chrome com o perfil padrão do Chrome
+    options = Options() # usado para definir as configurações do Chrome antes de inici-alo com o Selenium
+    options.add_argument(f"user-data-dir={caminho_perfil}") # Acessa o diretório base em que o Chrome armazena os usuários
+    options.add_argument(f"profile-directory={caminho_subperfil}") # Define o subperfil a ser acessado (no caso, o perfil será o padrão)
 
-prefs = {
-    "download.default_directory": caminho_arq_dbf, # Define a pasta de download
-    "download.prompt_for_download": False,           # Baixar sem prompt de confirmação
-    "download.directory_upgrade": True,              # Atualiza automaticamente o diretório
-    "safebrowsing.enabled": True,                    # Evita problemas com arquivos não seguros
-    "profile.default_content_setting_values.automatic_downloads": 1,  # Permite downloads automáticos
-    # Configura o MIME type específico, caso o tipo seja conhecido (ex.: "application/pdf")
-    "plugins.always_open_pdf_externally": True       # Para abrir PDFs automaticamente fora do navegador
-}
+    # Dicionário de preferências
+    prefs = {
+        "download.default_directory": caminho_arq_dbf, # Define a pasta em que o arquivo baixado será salvo
+        "download.prompt_for_download": False,           # Baixar o arquivo sem o prompt de confirmação (salvar como...)
+        "download.directory_upgrade": True,              # Atualiza automaticamente o diretório do download
+        "safebrowsing.enabled": True,                    # Mantém o recurso de navegação segura do Chrome ativado, evitando problemas com arquivos não seguros
+        "profile.default_content_setting_values.automatic_downloads": 1,  # Permite downloads automáticos
+        "plugins.always_open_pdf_externally": True       # Para abrir PDFs automaticamente fora do navegador
+    }
 
-options.add_experimental_option("prefs", prefs)
-navegador = webdriver.Chrome(options=options)
+    options.add_experimental_option("prefs", prefs) # adicionando o dicionário de preferências às opções do Chrome
+    return webdriver.Chrome(options=options)
 
-def encontrar_arquivo_zip_mais_recente(caminho_pasta):
-    arquivos = [os.path.join(caminho_pasta, f) for f in os.listdir(caminho_pasta) if f.endswith(".zip")]
+# Busca pelo arquivo zip mais recente armazenado na pasta ArquivoDBF
+def encontrar_arq_zip(caminho_arquivo, extensao=".zip"):
+    arquivos = [os.path.join(caminho_arquivo, f) for f in os.listdir(caminho_arquivo) if f.endswith(extensao)]
     if not arquivos:
-        raise FileNotFoundError(f"Nenhum arquivo ZIP foi encontrado na pasta {caminho_pasta}")
-    return max(arquivos, key=os.path.getmtime)
-    
-def descompactar_zip(arquivo_zip, destino_extracao):
+        raise FileNotFoundError(f"Nenhum arquivo '{extensao}' foi encontrado na pasta {caminho_arquivo}.")
+    print(f"Arquivo '{extensao}' encontrado com sucesso.")
+    return max(arquivos, key=os.path.getmtime) # pega o timestamp da ultima modificação do arq e compara com os outros arquivos
+
+# Descompacta o arquivo zip e extrai seu conteúdo para a pasta de destino
+def descompactar_arq_zip(arquivo_zip, destino_extracao):
     os.makedirs(destino_extracao, exist_ok=True)
     with zipfile.ZipFile(arquivo_zip, 'r') as zip_ref:
         zip_ref.extractall(destino_extracao)
     print(f"Arquivo ZIP '{arquivo_zip}' descompactado em '{destino_extracao}'.")
 
-def encontrar_arq_dbf(caminho_pasta, extensao=".dbf"):
-    arquivos = [os.path.join(caminho_pasta, f) for f in os.listdir(caminho_pasta) if f.endswith(extensao)]
+# Busca pelo arquivo .dbf que foi extraído mais recentemente
+def encontrar_arq_dbf(caminho_arquivo, extensao=".dbf"):
+    arquivos = [os.path.join(caminho_arquivo, f) for f in os.listdir(caminho_arquivo) if f.endswith(extensao)]
     if not arquivos:
         raise FileNotFoundError(f"Nenhum arquivo com a extensão '{extensao}' foi encontrado.")
-    return arquivos[0]
+    print(f"Arquivo '{extensao}' encontrado com sucesso.")
+    return max(arquivos, key=os.path.getmtime)
 
-def abrir_excel(caminho_arquivo):
-    excel = win32com.client.Dispatch("Excel.Application")
-    excel.Visible = True
-
+# Cria uma instancia do Excel no Windows, torna ela visível e tenta abrir um arquivo '.xlsx'
+def abrir_excel(caminho_excel):
+    excel = win32com.client.Dispatch("Excel.Application") # Abre uma instância do Excel no **WINDOWS**
+    excel.Visible = True # Faz o excel aparecer/abrir na tela
     try:
-        wb = excel.Workbooks.Open(caminho_arquivo)
+        wb = excel.Workbooks.Open(caminho_excel) # Equivale a ir no Excel e fazer "Arquivo > Abrir"
         return excel, wb
     except Exception as e:
         print(f"Erro ao abrir arquivo no Excel: {e}")
         raise    
 
+# Aguarda alguns segundos e depois simula o atalho 'Alt + F4' para fechar as janelas indesejadas que estão ativas na tela.
 def fechar_janelas_indesejadas():
     try:
-        time.sleep(5)
-        pyautogui.hotkey('alt', 'f4')
-        print("Janela do arquivo ZIP fechada.")
+        time.sleep(5) # Dá um tempo pra janela indesejada aparecer na tela
+        pyautogui.hotkey('alt', 'f4') # Simula o atalho 'Alt + F4', que fecha janelas ativas
+        print("Janela indesejada fechada com sucesso.")
     except Exception as e:
-        print(f"Erro ao fechar a janela ZIP: {e}")
+        print(f"Erro ao fechar a janela indesejada: {e}")
 
+# Busca todas as janelas abertas com o título "Visual Studio Code" e as minimiza. 
 def minimizar_janela():
     titulo_vscode = "Visual Studio Code"
     janela_vscode = [janela for janela in gw.getWindowsWithTitle(titulo_vscode) if janela.title]
 
     if not janela_vscode:
-        print("Nenhuma janela com o titulo '{titulo_vscode}' encontrada.")
+        print(f"Nenhuma janela com o titulo '{titulo_vscode}' encontrada.")
     else:
         for janela in janela_vscode:
             janela.minimize()
             print(f"A janela '{janela.title}' foi minimizada.")
 
+
 def posicionar_janelas():
-    janelas = gw.getWindowsWithTitle("Excel")
+    janelas = gw.getWindowsWithTitle("Excel") # Retorna uma lista de janelas abertos que contêm "Excel" no titulo
 
-    if len(janelas) < 2:
-        raise Exception("Menos de duas janelas do Excel abertas para ajustar.")
+    if len(janelas) < 2: # Verifica se existe pelo menos duas janelas abertas para fazer o posicionamento lado a lado
+        raise Exception("É necessário ao menos duas janelas do Excel abertas para ajustar.")
 
-    janelas = sorted(janelas, key=lambda x: x.title)
+    janelas = sorted(janelas, key=lambda x: x.title) # Ordena as janelas pelo titulo para garantir uma ordenação
+    largura_total, altura_total = pyautogui.size() # Obtem a largura e a altura da tela do computador
+    metade_largura_janela = largura_total // 2 # Calcula a metade da largura da tela
 
-    largura_tela, altura_tela = pyautogui.size()
-    largura_meia_tela = largura_tela // 2
-
-    # Configurar janela do lado esquerdo
-    janelas[0].moveTo(0, 0)  # Posição inicial no canto superior esquerdo
-    janelas[0].resizeTo(largura_meia_tela, altura_tela)
+    # Configurando a janela do lado esquerdo
+    janelas[0].moveTo(0, 0)  # Move a primeira janela para o canto superior esquerdo da tela (x = 0, y = 0)
+    janelas[0].resizeTo(metade_largura_janela, altura_total) # Faz a janela ocupar metade esquerda da tela e a altura total
 
     # Configurar janela do lado direito
-    janelas[1].moveTo(largura_meia_tela, 0)  # Metade da largura no eixo X
-    janelas[1].resizeTo(largura_meia_tela, altura_tela)
+    janelas[1].moveTo(metade_largura_janela, 0)  # Move a janela para começar na metade da tela
+    janelas[1].resizeTo(metade_largura_janela, altura_total) # redimensiona para ocupar a metade direita da tela e a altura total.
     
     print("Janelas posicionadas com sucesso.")
-    
-try:
-    navegador.get("https://sinan.saude.gov.br/sinan/login/login.jsf")
-    time.sleep(1.3)
-    print("Entrei no site") 
-    navegador.find_element(By.XPATH, '//*[@id="form"]/fieldset/div[4]/input').click()
-    time.sleep(1)
-    print("btn 1") 
-    navegador.find_element(By.XPATH, '//*[@id="barraMenu:j_id28"]/tbody/tr/td[12]').click()
-    time.sleep(1)
-    print("btn 2")
-    navegador.find_element(By.XPATH, '//*[@id="barraMenu:j_id52_span"]').click()
-    time.sleep(1.2)
-    print("btn 3") 
-    navegador.find_element(By.XPATH, '//*[@id="barraMenu:j_id53:anchor"]').click()
-    time.sleep(1.1)
-    print("btn 4") 
-    navegador.find_element(By.XPATH, '//*[@id="form:consulta_dataInicialPopupButton"]').click()
-    time.sleep(1)
-    print("btn 5") 
-    navegador.find_element(By.XPATH, '//*[@id="form:consulta_dataInicialHeader"]/table/tbody/tr/td[3]/div').click()
-    time.sleep(0.7)
-    print("btn 6")
-    navegador.find_element(By.XPATH, '//*[@id="form:consulta_dataInicialDateEditorLayoutM0"]').click()
-    time.sleep(0.6)
-    print("btn 7")
-    navegador.find_element(By.XPATH, '//*[@id="form:consulta_dataInicialDateEditorButtonOk"]').click()
-    time.sleep(0.8)
-    print("btn 8") 
-    navegador.find_element(By.XPATH, '//*[@id="form:consulta_dataInicialDayCell3"]').click()
-    time.sleep(0.8)
-    print("btn 9") 
-    navegador.find_element(By.XPATH, '//*[@id="form:consulta_dataFinalPopupButton"]').click()
-    time.sleep(1)
-    print("btn 10") 
-    navegador.find_element(By.XPATH, '//*[@id="form:consulta_dataFinalFooter"]/table/tbody/tr/td[5]/div').click()
-    time.sleep(1)
-    print("btn 11")
-    navegador.find_element(By.XPATH, '//*[@id="form:tipoUf"]').click()
-    time.sleep(0.8)
-    print("btn 12")
-    navegador.find_element(By.XPATH, '//*[@id="form:tipoUf"]/option[4]').click()
-    time.sleep(1)
-    print("btn 13") 
-    navegador.find_element(By.XPATH, '//*[@id="form:j_id128"]').click()
-    time.sleep(5)
-    print("btn 14")
-    print("Entrando no modo crítico") 
-    navegador.find_element(By.XPATH, '//*[@id="barraMenu:j_id52_span"]').click()
-    time.sleep(2.5)
-    print("Ok 1") 
-    navegador.find_element(By.XPATH, '//*[@id="barraMenu:j_id56:anchor"]').click()
-    time.sleep(4)
-    print("Ok 2") 
-    navegador.find_element(By.XPATH, '//*[@id="form:j_id101"]').click()
-    time.sleep(5)
-    print("Ok 3")
-    navegador.find_element(By.XPATH, '//*[@id="form:j_id101"]').click()
-    time.sleep(6)
-    print("Ok 4")
-    links  = navegador.find_elements(By.XPATH, '//a[contains(text(), "Baixar arquivo DBF")]')
-    if links:
-        links[-1].click()
-    else:
-        print("Nenhum link encontrado!")
-    time.sleep(1)
-    print("Ok 6")
-
-    fechar_janelas_indesejadas()
-    time.sleep(1)
-
-    os.startfile(caminho_arq_dbf)
-    time.sleep(1)
-
-    arquivo_zip_mais_recente = encontrar_arquivo_zip_mais_recente(caminho_arq_dbf)
-    time.sleep(0.5)
-
-    descompactar_zip(arquivo_zip_mais_recente, caminho_arq_dbf)
-    time.sleep(0.5)
-    print("Arquivo DBF descompactado")
-    fechar_janelas_indesejadas()
-
-    time.sleep(0.5)
-
-    planilha_daily_reports = r"C:\Users\USER\OneDrive\Área de Trabalho\Daily Reports.xlsx"
-    
-    if not os.path.exists(planilha_daily_reports):
-        raise FileNotFoundError(f"Arquivo {planilha_daily_reports} não encontrada.")
-    
-    planilha_arquivo_dbf = encontrar_arq_dbf(caminho_arq_dbf, extensao=".dbf")
-    time.sleep(0.6)
-    excel_dbf, wb_dbf = abrir_excel(planilha_arquivo_dbf)
-    os.startfile(planilha_daily_reports)
-    time.sleep(0.6)
-
-    os.startfile(planilha_arquivo_dbf)
-    time.sleep(0.5)
-
-    fechar_janelas_indesejadas()
-    time.sleep(0.3)
-
-    posicionar_janelas()
-    time.sleep(0.5)
-
-    minimizar_janela()
-except Exception as e:
-    print(f"Erro: {e}")
-
-input("Pressione Enter para encerrar...")
-navegador.quit()
