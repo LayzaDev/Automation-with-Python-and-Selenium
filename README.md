@@ -17,7 +17,7 @@ Este projeto automatiza o acesso a um site específico (ex.: SINAN) para realiza
 As seguintes ferramentas foram utilizadas no desenvolvimento do projeto:  
 
 **Linguagem:** Python  
-**Bibliotecas e Frameworks:** Selenium, Pandas  
+**Bibliotecas e Frameworks:** Selenium
 **Ambiente:** Jupyter Notebook, Anaconda  
 **Navegador:** Google Chrome  
 
