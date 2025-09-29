@@ -47,10 +47,8 @@ Com os dados processados, o programa gera relatórios automatizados que podem se
    - Copie o caminho do diretório do perfil de usuário e atualize no script.  
 4. Execute o script principal:  
    ```bash  
-   python automacao.py  
+   python main.py  
    ```
 ## Veja a automação funcionando na prática:
 [Acesse o link](https://drive.google.com/file/d/1ohVG0MiZkgCebL4HyFB8aL8ue2DtJO9S/view?usp=drive_link)
 
-## Status  
-🚧 Em andamento... 🚧  
