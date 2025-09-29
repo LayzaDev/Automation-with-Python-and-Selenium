@@ -49,6 +49,6 @@ Com os dados processados, o programa gera relatórios automatizados que podem se
    ```bash  
    python main.py  
    ```
+
 ## Veja a automação funcionando na prática:
 [Acesse o link](https://drive.google.com/file/d/1ohVG0MiZkgCebL4HyFB8aL8ue2DtJO9S/view?usp=drive_link)
-
